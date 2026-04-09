@@ -4,6 +4,12 @@ A hands-on lab demonstrating that operating systems **immediately trust USB HID 
 
 > **Educational use only.** This firmware types a benign `cat` command to display a flag file. It does not install software, exfiltrate data, or modify the host system.
 
+## Which Document To Use
+
+- `README.md`: technical reference for setup, build, flashing, host verification, and project structure
+- `PARTICIPANT.md`: concise conference handout for attendees
+- `FACILITATOR.md`: answer key, timing, hints, expected answers, and troubleshooting
+
 ## Hardware
 
 | Component | Detail |
@@ -109,7 +115,26 @@ sudo evtest
 # Select the "Trust Demo Keyboard" device, then press BOOT on the dongle
 ```
 
-### 4. (Facilitator) Pre-provision machine with setup scripts
+### 4. What you can and cannot see by default
+
+By default, host-side logs usually show:
+
+- A new USB device was attached
+- The device identified itself as a HID keyboard
+- USB strings such as manufacturer or product name
+
+By default, host-side logs usually do **not** show:
+
+- The actual keystrokes
+- The exact injected command
+
+Those effects are more likely to be inferred from:
+
+- The terminal window opening
+- Shell history
+- Process or audit logs, if the host has them enabled
+
+### 5. (Facilitator) Pre-provision machine with setup scripts
 
 From the repository root:
 
@@ -119,21 +144,6 @@ From the repository root:
 # or run all steps:
 ./provision.sh
 ```
-
-## Lab Discussion Points
-
-### Phase 2 — Investigation
-
-- **What device class was this?** USB HID (Human Interface Device), subclass keyboard.
-- **Why no driver prompt?** HID is a "trusted" class — the OS has built-in drivers and loads them automatically for any device claiming to be a keyboard, mouse, or gamepad.
-- **Why did this happen?** The USB protocol delegates trust to the device. The device tells the host what it is, and the host believes it. There is no cryptographic verification.
-
-### Phase 3 — Defence
-
-- **USB device class whitelisting** — tools like USBGuard (Linux) or Group Policy (Windows) can block unknown HID devices.
-- **Endpoint Detection and Response (EDR)** — most EDR tools do not inspect HID traffic. They may detect the *effects* (e.g., suspicious shell commands) but not the injection method.
-- **Physical port control** — disable unused USB ports in BIOS, use port blockers, or limit USB access via policy.
-- **User awareness** — never plug in untrusted USB devices. This is the simplest and most effective defence.
 
 ## Project Structure
 
