@@ -1,153 +1,354 @@
-# Facilitator Guide — Trust Me, I’m a Keyboard
+# Facilitator Guide — Trust Me, I'm a Keyboard
 
 **Do not distribute this file to participants.**
 
 ## Overview
 
-The firmware has 3 bugs in the HID keycode mapping table (`main/hid_keyboard.c`,
-`s_ascii_keymap[]`). The payload `cat ~/flag.txt` types garbled text.
-Participants must find and fix the bugs, then explain what they learned.
+This lab uses a LILYGO T-Dongle-S3 running ESP-IDF firmware that enumerates as a USB HID keyboard. When it is plugged into a Lubuntu machine, the LCD shows `READY` and the LED turns green. The device does nothing until the participant presses the physical `BOOT` button.
 
-**The fix is intentionally approachable.** The real assessment is whether they can
-explain *why* it was broken — not just *that* it was broken.
+When working correctly, the button press triggers this sequence:
 
----
+1. Send `Ctrl+Alt+T`
+2. Wait 1.5 seconds for a terminal to open
+3. Type `cat ~/flag.txt`
+4. Press Enter
 
-## Pre-event setup (facilitator)
+Participants receive a deliberately broken firmware project. Their job is to find the bugs, fix, and rebuild with `idf.py build flash`, and confirm the flag appears on the host.
 
-Run from the repository root on each Lubuntu lab machine:
+The lab should be somewhat friendly at the code level. The deeper learning goal is understanding why USB HID devices are trusted so quickly, what a keyboard really sends to the host, and what defenses are realistic.
+
+## Learning Goals
+
+By the end of the station, participants should be able to:
+
+- Recognize that USB keyboards send HID scancodes and modifiers, not characters
+- Explain why the host trusted the device immediately with no driver prompt
+- Describe at least a few realistic defenses against HID keystroke injection
+
+## Lab At A Glance
+
+- Hardware: LILYGO T-Dongle-S3
+- Host: Lubuntu / LXQt
+- Working device identity: `Trust Demo Keyboard`
+- State machine: `INIT -> READY -> TYPING -> DONE`
+- LED colors:
+  - `INIT`: blue
+  - `READY`: green
+  - `TYPING`: red
+  - `DONE`: purple
+- Working payload: `cat ~/flag.txt`
+- Broken output participants will see: `cAy ~/flAg/yxy`
+- Total time: about 20 minutes
+
+## Pre-Event Checklist
+
+Run these steps on each lab machine before the event.
+
+### 1. Provision the machine
+
+From the repository root:
+
+```bash
+./provision.sh
+```
+
+If you prefer to run the steps separately:
 
 ```bash
 ./setup-base.sh
 ./setup-labs.sh trust-keyboard
-# or run both steps:
-./provision.sh
 ```
 
-Notes:
-- The per-lab provisioning script now lives in `labs/01-trust-keyboard/setup.sh`.
+What this does:
 
----
+- Installs ESP-IDF tooling and dependencies
+- Adds udev access for Espressif USB devices
+- Adds the user to `dialout` and `plugdev`
+- Builds the lab once to warm the build cache
+- Creates `~/flag.txt`
 
-## What's broken
+If user groups changed, log out and back in before flashing devices.
 
-The payload types: **`cAy ~/flAg/yxy`** instead of `cat ~/flag.txt`
+### 2. Confirm the flag file exists
 
-| Bug | Line | What's wrong | Correct value | What types |
-|-----|------|-------------|---------------|------------|
-| 1 | `.` entry (0x2E) | `HID_KEY_SLASH` | `HID_KEY_PERIOD` | `/` instead of `.` |
-| 2 | `/` entry (0x2F) | `HID_KEY_PERIOD` | `HID_KEY_SLASH` | `.` instead of `/` |
-| 3 | `a` entry (0x61) | `_S` (Shift) modifier | `_N` (no modifier) | `A` instead of `a` |
-| 4 | `t` entry (0x74) | `HID_KEY_Y` | `HID_KEY_T` | `y` instead of `t` |
+The setup script should create:
 
-### Fix (diff)
+```bash
+~/flag.txt
+```
 
-```c
-// Line ~145: swap these two keycodes back
+Expected contents:
+
+```text
+FLAG{HID_TRUST_IS_BLIND}
+```
+
+### 3. Flash each device with the broken firmware
+
+From the repository root:
+
+```bash
+cd labs/01-trust-keyboard
+idf.py set-target esp32s3
+idf.py build flash
+```
+
+If needed, specify the port explicitly:
+
+```bash
+idf.py -p /dev/ttyACM0 build flash
+```
+It may not be at this exact port, verify with ls /dev/tty*
+
+### 4. Verify host behavior
+
+On the Lubuntu machine:
+
+- Confirm `Ctrl+Alt+T` opens a terminal manually
+- Plug in the dongle normally
+- Confirm the LCD shows `READY`
+- Confirm the LED is green
+- Press `BOOT`
+- Confirm the broken firmware types `cAy ~/flAg/yxy`
+
+This confirms the puzzle is still intact.
+
+### 5. Verify USB enumeration
+
+Use either of these checks:
+
+```bash
+lsusb
+```
+
+or:
+
+```bash
+dmesg -w
+```
+
+You should see the device enumerate as a HID keyboard. The product string is `Trust Demo Keyboard`, and host logs may also include the manufacturer string `BSides Lab`.
+
+### 6. Quick station reset check
+
+Before participants arrive, confirm:
+
+- The repo opens at `labs/01-trust-keyboard`
+- `main/hid_keyboard.c` is present and editable
+- `idf.py` works in a terminal
+- The device can be re-flashed from that machine
+- Plugging in and pressing `BOOT` reproduces the broken output
+
+## Timing Guide
+
+| Phase | Target Time | Facilitator Notes |
+|------|------:|---|
+| Intro and setup | 1-2 min | Hand out the device, point participants at the lab directory, explain the goal |
+| Puzzle | 2-5 min | Let them observe the broken typing, find the keymap issue, rebuild, and flash |
+| Investigation and discussion | 5-8 min | Ask the three required questions after they solve it |
+| Optional stretch | 2-4 min | Use the host-evidence question or extra prompts if the table is moving fast |
+| Total | ~20 min | Adjust pacing based on table traffic |
+
+## Intended Solve Path
+
+1. Participant plugs the dongle into the Lubuntu host
+2. They see `READY` on the LCD and a green LED
+3. They press `BOOT` and observe the wrong command being typed
+4. They inspect `main/hid_keyboard.c`
+5. They find the `s_ascii_keymap[]` table
+6. They correct the bad mappings
+7. They run `idf.py build flash`
+8. They test again and confirm the flag appears
+9. They explain why the bug mattered and why the OS trusted the device
+
+## Answer Key
+
+The puzzle is in `main/hid_keyboard.c`, inside `s_ascii_keymap[]`.
+
+There are **three intentional defects**:
+
+1. The `.` and `/` mappings are swapped
+2. Lowercase `a` incorrectly uses the Shift modifier
+3. Lowercase `t` is mapped to `HID_KEY_Y`
+
+That produces:
+
+```text
+cAy ~/flAg/yxy
+```
+
+instead of:
+
+```text
+cat ~/flag.txt
+```
+
+### Correct Fix
+
+```diff
+/* swap these two back */
 - /* 0x2E '.'  */ { _N, HID_KEY_SLASH },
 - /* 0x2F '/'  */ { _N, HID_KEY_PERIOD },
 + /* 0x2E '.'  */ { _N, HID_KEY_PERIOD },
 + /* 0x2F '/'  */ { _N, HID_KEY_SLASH },
 
-// Line ~181: change _S back to _N for lowercase 'a'
-- { _S, HID_KEY_A }, { _N, HID_KEY_B }, ...
-+ { _N, HID_KEY_A }, { _N, HID_KEY_B }, ...
+/* lowercase 'a' should not use Shift */
+- { _S, HID_KEY_A }, { _N, HID_KEY_B }, { _N, HID_KEY_C },
++ { _N, HID_KEY_A }, { _N, HID_KEY_B }, { _N, HID_KEY_C },
 
-// Line ~187: change HID_KEY_Y back to HID_KEY_T for lowercase 't'
+/* lowercase 't' should map to T, not Y */
 - { _N, HID_KEY_S }, { _N, HID_KEY_Y }, { _N, HID_KEY_U },
 + { _N, HID_KEY_S }, { _N, HID_KEY_T }, { _N, HID_KEY_U },
 ```
 
----
+### What "solved" looks like
 
-## Progressive hints (give verbally if stuck)
+After the fix and a successful flash:
 
-### Hint 1 — Observation (give after ~2 min if no progress)
-> "Plug it in and press BOOT. Compare what it types to what it should type.
-> Which specific characters came out wrong?"
+- Plugging in the device shows `READY`
+- Pressing `BOOT` opens a terminal
+- The device types `cat ~/flag.txt`
+- The flag appears in the terminal window
 
-### Hint 2 — Location (give if they don't know where to look)
-> "The payload string is fine — the problem is how characters get converted
-> to keystrokes. Look at `hid_keyboard.c`."
+## Hint Ladder
 
-### Hint 3 — Mechanism (give if they found the file but are confused)
-> "USB keyboards don't send letters. They send numeric scancodes, and the
-> host OS decides what character that means. There's a mapping table in
-> the code — find it."
+Give hints verbally and only as needed. The goal is to keep momentum without removing the puzzle.
 
-### Hint 4 — Specific (give as a last resort)
-> "Look at the `s_ascii_keymap` array. Each entry has a modifier and a keycode.
-> Find the entries for the characters that typed wrong and compare them to
-> nearby correct entries."
+### Hint 1: Observation
 
----
+Use after about 2 minutes if they have not narrowed down the problem.
 
-## Explanation questions (the actual assessment)
+> "Watch exactly what comes out when you press BOOT. Which characters are wrong, and which ones are still correct?"
 
-After they fix it, ask these. The goal is understanding, not just code editing.
+### Hint 2: Location
 
-### Phase 2 — Investigation (must answer to "pass")
+Use if they are not sure where to start in the code.
 
-1. **"What did you fix and why did it cause wrong characters?"**
-   - Good answer: The table maps ASCII characters to HID scancodes. The keycodes
-     were swapped/wrong, so the host OS interpreted different physical keys than
-     intended.
-   - Great answer: Mentions that HID keyboards send Usage IDs (scancodes), not
-     characters. The host OS maps scancodes to characters using its keyboard
-     layout. The device has no idea what the host will display.
+> "The payload string itself is fine. Look at how the firmware turns characters into key presses."
 
-2. **"What device class is this? Why did the OS trust it immediately?"**
-   - Answer: USB HID (Human Interface Device). Operating systems auto-load HID
-     drivers because keyboards and mice are essential to use the computer. There's
-     no "install driver?" prompt — it just works.
+### Hint 3: Mechanism
 
-3. **"If the target machine was using a French (AZERTY) keyboard layout, would
-   this attack still work? Why or why not?"**
-   - Answer: No. The same scancodes would produce different characters because
-     the French layout maps them differently. For example, HID_KEY_A would
-     produce 'q' on AZERTY. Commercial keystroke-injection tools (e.g. Rubber Ducky) need
-     locale-specific keymap files for this reason.
+Use if they found the right file but do not understand what they are looking at.
 
-### Phase 3 — Defense (discussion, no single right answer)
+> "USB keyboards do not send letters. They send keycodes and modifiers. There is a table in the code that maps printable characters to those values."
 
-4. **"What would stop this in an enterprise?"**
-   - USB device whitelisting (by VID/PID or device class)
-   - USBGuard (Linux), Group Policy (Windows) to block new HID devices
-   - Physical USB port blocking / epoxy
-   - User awareness training
+### Hint 4: Specific
 
-5. **"Would EDR catch this?"**
-   - Maybe. EDR might flag rapid keystroke injection, or the spawned terminal
-     process. But the keystrokes themselves look identical to a real keyboard —
-     there's no malware binary to scan. This is why HID keystroke injection is effective: the
-     attack IS legitimate HID traffic.
+Use as the last resort.
 
-6. **"The device shows up as 'Trust Demo Keyboard' in lsusb. Could an attacker
-   change that? Would it help them?"**
-   - Yes, USB string descriptors are trivially configurable in firmware. An
-     attacker would set VID/PID and product strings to match a known keyboard
-     (e.g., Logitech, Dell). This is social engineering at the hardware level.
+> "Check `s_ascii_keymap[]` in `main/hid_keyboard.c`. Compare the entries for the wrong characters against nearby entries and the intended command."
 
----
+## Required Discussion Questions
 
-## Timing guide
+These are the core assessment questions. A participant does not need perfect terminology, but they should be able to explain the mechanism, the trust model, and at least a few defensive ideas.
 
-| Phase | Target | Activity |
-|-------|--------|----------|
-| Setup | 1 min | Hand out device, open the project in their editor |
-| Puzzle | 2-5 min | Find and fix the keymap bugs, rebuild and flash |
-| Investigation | 5-8 min | Questions 1-3, discussion |
-| Defense | 5-8 min | Questions 4-6, group discussion |
-| **Total** | **~15-20 min** | |
+### 1. What did you fix, and why did it cause the wrong characters to appear?
 
----
+- Good answer: The firmware had wrong entries in the key mapping table, so it sent the wrong keycodes or modifiers for some characters.
+- Great answer: The device sends HID usage IDs and modifiers, not text. The host translates those into characters using its own keyboard layout, so a wrong mapping in firmware produces the wrong output on screen.
 
-## Rebuild & flash (for reference)
+### 2. What class of USB device is this, and why did the OS trust it immediately?
+
+- Good answer: It is a USB HID keyboard, so the OS used a built-in driver automatically.
+- Great answer: HID is a standard, heavily trusted device class because people need keyboards and mice to use a system. The host accepts the device's claim and loads generic support without a driver-install prompt or user approval.
+
+### 3. What would make this attack harder or stop it in a managed environment?
+
+- Good answer: USB device control, allowlists, blocking unknown keyboards, and physical port restrictions.
+- Great answer: Specific measures like USBGuard on Linux, enterprise device control policies, limiting new HID enrollment, port blockers, user awareness, and process controls on sensitive systems all help because this attack relies on the host accepting a new keyboard at all.
+
+## Optional Stretch Question
+
+Use this if a participant finishes early or you want to connect the demo to host-side visibility.
+
+### 4. Where on the host can you observe that a new USB keyboard appeared, and what is not visible by default?
+
+- Good answer: `dmesg -w`, `journalctl -k -f`, and `lsusb` can show that a new HID device appeared and identify it as a keyboard.
+- Great answer: Those sources show device arrival, identity, and kernel/HID enumeration, but they usually do not show the actual keystrokes or the exact injected command. Defenders often detect the effects instead, such as a terminal launch, suspicious process behavior, shell history, or audit data if extra logging is enabled.
+
+## Extra Facilitator Prompts
+
+Use these only if the table is advanced or you want to extend the conversation. They are no longer required for completion.
+
+- Different keyboard layout: Would the same firmware work on AZERTY, and why not?
+- EDR: Would an endpoint tool reliably catch keystroke injection, or only its side effects?
+- Identity spoofing: Could an attacker rename the device or spoof VID/PID values, and how much would that help?
+
+## What To Do If Things Go Wrong
+
+### Device does not enumerate
+
+Check these in order:
+
+1. Unplug and replug the dongle
+2. Try a different USB port
+3. Confirm the board is getting power and the display or LED comes on
+4. Watch `dmesg -w` while plugging it in
+5. Reflash it in download mode:
 
 ```bash
-idf.py build
-idf.py -p /dev/ttyACM0 flash    # adjust port as needed
+cd labs/01-trust-keyboard
+idf.py -p /dev/ttyACM0 flash
 ```
 
-Participants should rebuild after fixing the code and verify the payload
-types correctly: `cat ~/flag.txt`
+6. If flashing fails with permissions, confirm the user logged out and back in after provisioning
+7. If nothing appears at all, suspect a bad port, bad board, or host USB issue
+
+### Wrong characters still appear after the participant "fixed" it
+
+Common causes:
+
+1. They edited the wrong file or wrong entries in `s_ascii_keymap[]`
+2. The firmware built successfully but was not actually flashed to the device
+3. The board was left in the old state and never retested after flashing
+4. The host keyboard layout is not US QWERTY
+5. A stale build artifact is being reused
+
+Suggested recovery steps:
+
+```bash
+cd labs/01-trust-keyboard
+rm -rf build
+idf.py build flash
+```
+
+Then test again on a US-layout Lubuntu machine.
+
+### Terminal does not open
+
+Check:
+
+1. Press `Ctrl+Alt+T` manually on the host
+2. Confirm the desktop environment still uses that shortcut
+3. Make sure the host has focus and is not on a locked screen or dialog
+4. Increase `TERMINAL_OPEN_DELAY_MS` if the terminal opens too slowly
+5. As a fallback for demos, open a terminal manually and disable the shortcut step in `menuconfig`, or temporarily explain that the keyboard still types into the focused window
+
+### Flashing fails
+
+Check:
+
+1. `idf.py` is available in the shell
+2. The port is correct, usually `/dev/ttyACM0`
+3. The user has serial permissions
+4. The device is in download mode when required
+
+If needed, reopen the terminal or run:
+
+```bash
+source ~/.bashrc
+```
+
+## Volunteer Notes
+
+- Beginners often look for the payload string first; redirect them toward the keymap
+- Advanced participants may jump straight to USB trust and defenses; let them, but still have them prove the fix
+- If a table is stuck, ask them to compare expected output with actual output character by character
+- Keep the conversation grounded in defensive understanding, not "how to weaponize it"
+
+## Reset Between Participants
+
+1. Reflash the broken firmware if the previous participant solved it
+2. Confirm `~/flag.txt` still exists
+3. Plug in the device and verify it still types the broken command
+4. Close extra terminal windows so the next participant starts clean
