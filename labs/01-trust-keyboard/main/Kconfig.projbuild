@@ -1,4 +1,4 @@
-menu "BSides BadUSB Configuration"
+menu "Trust Me, I am a Keyboard — Configuration"
 
     config PAYLOAD_COMMAND
         string "Command to type on the host"

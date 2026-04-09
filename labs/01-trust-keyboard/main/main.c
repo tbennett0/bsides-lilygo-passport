@@ -1,5 +1,5 @@
 /*
- * main.c — BSides BadUSB demo entry point.
+ * main.c — "Trust Me, I'm a Keyboard" lab entry point.
  *
  * State machine:
  *   INIT  → READY  (when USB host mounts the device)
@@ -75,8 +75,8 @@ void app_main(void)
     button_init();
     display_init();
 
-    display_show_status("BSides BadUSB", "Connecting...");
-    ESP_LOGI(TAG, "BSides BadUSB — LILYGO T-Dongle-S3");
+    display_show_status("Trust Me", "I'm a Keyboard");
+    ESP_LOGI(TAG, "Trust Me, I'm a Keyboard — LILYGO T-Dongle-S3");
     ESP_LOGI(TAG, "Payload: %s", CONFIG_PAYLOAD_COMMAND);
 
     hid_keyboard_init();

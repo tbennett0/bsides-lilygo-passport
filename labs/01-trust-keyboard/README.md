@@ -1,6 +1,6 @@
-# BSides BadUSB — USB HID Trust Demo
+# Trust Me, I’m a Keyboard — USB HID trust demo
 
-A hands-on lab demonstrating that operating systems **immediately trust USB HID devices** with no driver prompt or user consent. When plugged into a Lubuntu host and activated with the BOOT button, this LILYGO T-Dongle-S3 opens a terminal and reads a flag file — proving that a USB keyboard can execute arbitrary commands the moment it is plugged in.
+A hands-on lab demonstrating that operating systems **immediately trust USB HID devices** with no driver prompt or user consent. When plugged into a Lubuntu host and activated with the BOOT button, this LILYGO T-Dongle-S3 opens a terminal and reads a flag file — proving that a device claiming to be a keyboard can inject keystrokes the moment it is plugged in.
 
 > **Educational use only.** This firmware types a benign `cat` command to display a flag file. It does not install software, exfiltrate data, or modify the host system.
 
@@ -34,13 +34,17 @@ A hands-on lab demonstrating that operating systems **immediately trust USB HID 
 
 ## Build and Flash
 
+From the **repository root**, enter this lab’s firmware directory:
+
 ```bash
+cd labs/01-trust-keyboard
+
 # 1. Set target (one-time)
 idf.py set-target esp32s3
 
 # 2. (Optional) Customise the payload, timings, or LCD settings
 idf.py menuconfig
-#   → "BSides BadUSB Configuration"
+#   → "Trust Me, I am a Keyboard — Configuration"
 
 # 3. Build
 idf.py build
@@ -105,6 +109,17 @@ sudo evtest
 # Select the "Trust Demo Keyboard" device, then press BOOT on the dongle
 ```
 
+### 4. (Facilitator) Pre-provision machine with setup scripts
+
+From the repository root:
+
+```bash
+./setup-base.sh
+./setup-labs.sh trust-keyboard
+# or run all steps:
+./provision.sh
+```
+
 ## Lab Discussion Points
 
 ### Phase 2 — Investigation
@@ -123,10 +138,11 @@ sudo evtest
 ## Project Structure
 
 ```
-bsides-badusb/
+labs/01-trust-keyboard/         (ESP-IDF project root)
 ├── CMakeLists.txt              Project definition
 ├── sdkconfig.defaults          ESP32-S3 / USB / flash defaults
 ├── README.md                   This file
+├── setup.sh                    Lab provisioning script (used by setup-labs.sh)
 └── main/
     ├── CMakeLists.txt          Component source list
     ├── idf_component.yml       esp_tinyusb dependency
