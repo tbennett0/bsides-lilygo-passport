@@ -65,3 +65,12 @@ esptool \
   --flash_size detect \
   0x0 ./t_dongle_s3-factory.bin
 ```
+
+
+## Flock Spoofer
+
+For event hosting, you can spoof your own flock camera with this repo
+
+https://github.com/spuder/Flock-Spoofer
+
+The flag is defined in variable `"DEVICE_NAME"`
