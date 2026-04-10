@@ -1,0 +1,18 @@
+menu "Firmware RE Lab — Configuration"
+
+    config ENABLE_LCD
+        bool "Enable ST7735 LCD display"
+        default y
+        help
+            Drive the on-board 0.96" ST7735 LCD.
+            Disable to save flash/RAM or if the display is absent.
+
+    config LCD_BACKLIGHT_INVERTED
+        bool "LCD backlight is active-low"
+        default y
+        depends on ENABLE_LCD
+        help
+            Some T-Dongle-S3 revisions invert the backlight pin.
+            Enable if the display stays dark with the default setting.
+
+endmenu
