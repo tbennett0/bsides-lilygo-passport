@@ -20,10 +20,13 @@ Current labs in the repo include:
 
 - `labs/01-trust-keyboard`
 - `labs/02-ai-camera`
+- `labs/03-firmware-reversing`
 
 `labs/01-trust-keyboard` demonstrates USB HID trust using a LILYGO T-Dongle-S3 that enumerates as a keyboard, waits for a physical button press, then injects a benign command on a Lubuntu host.
 
 `labs/02-ai-camera` uses a browser-based web flasher to prepare a LilyGO device for locating nearby AI camera beacons, and its lab setup installs Google Chrome for that workflow.
+
+`labs/03-firmware-reversing` teaches users to extract firmware from embedded devices using esptool and reverse engineer for hardcoded credentials and weak encryption.
 
 See:
 
@@ -49,9 +52,12 @@ bsides-lilygo-passport/
     │   ├── FACILITATOR.md
     │   ├── setup.sh
     │   └── main/
-    └── 02-ai-camera/
-        ├── README.md
-        └── setup.sh
+    ├── 02-ai-camera/
+    │   ├── README.md
+    │   └── setup.sh
+    └── 03-firmware-reversing/
+        ├── challenge.bin
+        └── FLASHING.md
 ```
 
 ## Getting Started
