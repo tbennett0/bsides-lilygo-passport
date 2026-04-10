@@ -1,6 +1,6 @@
 # BSides LilyGO Passport
 
-A collection of conference labs built around the LILYGO T-Dongle-S3 and related station materials for BSides-style hands-on learning. The repository is meant to hold more than machine setup: it includes the lab firmware projects themselves, host provisioning scripts, and the participant/facilitator documentation used to run the stations.
+A collection of conference labs built around the LILYGO T-Dongle-S3 and related station materials for BSides hands-on learning. The repository holds machine setup, some lab firmware projects themselves, host provisioning scripts, and the participant/facilitator documentation used to run the stations.
 
 ## What This Repository Contains
 
@@ -14,19 +14,23 @@ Current contents include:
 - Reusable template files for future station writeups
 - Shared machine setup scripts for Lubuntu-based event systems
 
-## Current Lab
+## Current Labs
 
-Right now the main lab in the repo is:
+Current labs in the repo include:
 
 - `labs/01-trust-keyboard`
+- `labs/02-ai-camera`
 
-That lab demonstrates USB HID trust using a LILYGO T-Dongle-S3 that enumerates as a keyboard, waits for a physical button press, then injects a benign command on a Lubuntu host.
+`labs/01-trust-keyboard` demonstrates USB HID trust using a LILYGO T-Dongle-S3 that enumerates as a keyboard, waits for a physical button press, then injects a benign command on a Lubuntu host.
+
+`labs/02-ai-camera` uses a browser-based web flasher to prepare a LilyGO device for locating nearby AI camera beacons, and its lab setup installs Google Chrome for that workflow.
 
 See:
 
 - `labs/01-trust-keyboard/README.md` for the technical lab reference
 - `labs/01-trust-keyboard/PARTICIPANT.md` for the attendee-facing handout
 - `labs/01-trust-keyboard/FACILITATOR.md` for the volunteer/facilitator guide
+- `labs/02-ai-camera/README.md` for the AI camera participant handout
 
 ## Repository Layout
 
@@ -39,12 +43,15 @@ bsides-lilygo-passport/
 ├── participant_handout_template.md      # Reusable participant template
 ├── builder_volunteer_guide_template.md  # Reusable builder/volunteer template
 └── labs/
-    └── 01-trust-keyboard/
+    ├── 01-trust-keyboard/
+    │   ├── README.md
+    │   ├── PARTICIPANT.md
+    │   ├── FACILITATOR.md
+    │   ├── setup.sh
+    │   └── main/
+    └── 02-ai-camera/
         ├── README.md
-        ├── PARTICIPANT.md
-        ├── FACILITATOR.md
-        ├── setup.sh
-        └── main/
+        └── setup.sh
 ```
 
 ## Getting Started
@@ -64,6 +71,7 @@ Run these from the repository root:
 
 # 4. Or provision a specific lab
 ./setup-labs.sh trust-keyboard
+./setup-labs.sh ai-camera
 ```
 
 Or run the full process in one command:
@@ -97,7 +105,7 @@ Discovers and runs each `labs/*/setup.sh` script in alphabetical order.
 ./setup-labs.sh trust-keyboard
 ```
 
-Each lab setup runs in its own shell process, so one failing lab does not abort the rest.
+Each lab setup runs in its own shell process, so one failing lab does not abort the rest. Lab-specific dependencies should live there; for example, `labs/02-ai-camera/setup.sh` installs Google Chrome for the browser flasher workflow.
 
 Environment variables passed to each lab `setup.sh`:
 
@@ -123,7 +131,7 @@ To add another station:
 1. Add the lab project under `labs/<lab-id>/`
 2. Add a `setup.sh` in that same lab directory
 3. Keep the lab self-contained: firmware, docs, and host setup steps should live together
-4. If it uses ESP-IDF, verify `idf.py` exists at the start of the setup script
+4. If it uses ESP-IDF, verify `idf.py` is available to the setup script
 5. Add lab-specific `README.md`, participant, and facilitator docs as needed
 
 Minimal `setup.sh` example:
