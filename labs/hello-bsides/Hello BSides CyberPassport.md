@@ -10,6 +10,17 @@
 
 You need to get something printed onto the screen of the T-Dongle. That something can be a simple message or a fun image. USBArmyKnife is recommended as it is easier to do this with, but you can get creative.
 
+THE DOCUMENTATION IS YOUR FRIEND.
+
+**IMPORTANT NOTE**
+You will need a spare SD card to get USBArmyKnife to boot. You can also create a custom firmware that displays on the screen.
+
+You can also come to the station and connect to the `hello-bsides` with password `password` and run a command to change the content of the screen.
+
+The URL is http://4.3.2.1:8080 to access the WebUI.
+
+(Raw commands are in the command tab, running raw commands)
+
 ## Your Goal
 
 Complete the lab by:
