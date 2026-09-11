@@ -28,7 +28,7 @@ Complete the lab by identifying the `FLAG{}` string captured by the LilyGo scann
 
 ## Starting Point
 
-1. Open a Chrome-based browser and navigate to [https://hydra.snowy-vibes.ts.net](https://hydra.snowy-vibes.ts.net)
+1. Open a Chrome-based browser and navigate to [https://flock-finder.org/](https://flock-finder.org/)
 2. Flash the firmware
 
 ## Checkpoints
@@ -43,3 +43,34 @@ To finish the station, show a volunteer the **unredacted flag**:
 - `FLAG{REDACTED}`
 
 **Need a hint? Ask a volunteer.**
+
+
+## Addional information
+
+After the event, you can flash the firmware from https://flock-finder.org/
+Or from this repo: https://github.com/spuder/flock-you
+
+Alternativly flash from the .bin file in this repo
+
+```bash
+esptool \
+  --chip esp32s3 \
+  --port /dev/cu.usbmodem11301 \
+  --baud 921600 \
+  --before default_reset \
+  --after hard_reset \
+  write_flash \
+  -z \
+  --flash_mode dio \
+  --flash_size detect \
+  0x0 ./t_dongle_s3-factory.bin
+```
+
+
+## Flock Spoofer
+
+For event hosting, you can spoof your own flock camera with this repo
+
+https://github.com/spuder/Flock-Spoofer
+
+The flag is defined in variable `"DEVICE_NAME"`

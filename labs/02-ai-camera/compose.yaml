@@ -1,0 +1,6 @@
+services:
+  ai-camera:
+    build: .
+    container_name: ai-camera
+    ports:
+      - "2026:80"
