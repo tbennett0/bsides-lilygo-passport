@@ -2,6 +2,19 @@
 
 A collection of conference labs built around the LILYGO T-Dongle-S3 and related station materials for BSides hands-on learning. The repository holds machine setup, some lab firmware projects themselves, host provisioning scripts, and the participant/facilitator documentation used to run the stations.
 
+## Disclaimer
+
+This project is provided for educational, research, and authorized security-testing purposes.
+
+The software and materials in this repository demonstrate offensive security techniques and may perform actions that resemble or constitute malicious activity when used outside a controlled environment. Use these materials only on systems, devices, and networks that you own or for which you have explicit authorization to test.
+
+You are solely responsible for how you use, modify, distribute, or deploy this project and for ensuring that your use complies with applicable laws, policies, and authorization requirements.
+
+This project is provided **“AS IS”**, without warranties or guarantees of any kind. The authors and contributors are not responsible for damage, data loss, service interruption, unauthorized access, legal consequences, or other harm resulting from the use or misuse of this project.
+
+See the `LICENSE` file for the terms governing use and distribution of this software.
+
+
 ## What This Repository Contains
 
 At a high level, this repo is organized around individual labs under `labs/`, plus shared setup and documentation assets at the repo root.
